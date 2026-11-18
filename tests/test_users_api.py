@@ -16,11 +16,17 @@ def expected_asses(full_name: str) -> str:
 
 @pytest.fixture(scope="session")
 def api_client():
-    session = requests.Session()
+    # Создаем умную сессию, которая сама подставляет BASE_URL
+    class SmartSession(requests.Session):
+        def request(self, method, url, *args, **kwargs):
+            if not url.startswith("http"):
+                url = BASE_URL + url
+            return super().request(method, url, *args, **kwargs)
+
+    session = SmartSession()
     session.headers.update({"Content-Type": "application/json"})
     yield session
     session.close()
-
 
 @pytest.fixture
 def created_user(api_client):
